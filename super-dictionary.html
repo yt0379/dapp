@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>超级字典</title>
+    <style>
+        body {
+            background-image: url("img/bg.jpg");
+        }
+
+        .logo {
+            text-align: center;
+        }
+
+        .logo > h1 {
+            font-size: 62px;
+            font-weight: normal;
+            margin: 0;
+            text-shadow: 3px 3px grey;
+        }
+
+        /*搜索框*/
+        .search,.add_banner {
+            text-align: center;
+        }
+
+        #search_value,#add_value {
+            width: 60%;
+            height: 40px;
+            box-shadow: 3px 3px grey;
+        }
+
+        #search,#save {
+            width: 15%;
+            height: 45px;
+            box-shadow: 3px 3px grey;
+            position: relative;
+            top: 2px;
+        }
+
+        .hide{
+            display: none;
+        }
+
+        div#search_banner {
+            font-size: 32px;
+            border-bottom: 1px solid black;
+        }
+
+        p#search_result {font-size: 20px;}
+
+        .result_success,.result_faile {
+            width: 70%;
+            margin: 10px auto;
+        }
+
+        .author {
+            text-align: right;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+<!--logo-->
+<div class="logo">
+    <h1>SUPER DICTIONARY</h1>
+    <img src="img/logo.png">
+</div>
+
+<!--搜索框-->
+<div class="search">
+    <input type="text" id="search_value">
+    <button id="search">搜索</button>
+</div>
+
+<!--搜索结果-->
+<div class="result_success hide">
+    <div id="search_banner"></div>
+    <p id="search_result"></p>
+    <div class="author">
+        <span>作者：</span>
+        <span id="search_result_author"></span>
+    </div>
+</div>
+
+<!--提示用户添加词条-->
+<div class="result_faile hide">
+    没有找到相关词条，您想要将“<span id="result_faile_add"></span>”<button id="add">添加</button>到字典吗？
+</div>
+
+<!--新增词条表单-->
+<div class="add_banner hide">
+    <input type="text" id="add_value" placeholder="请输入词条描述信息">
+    <button id="save">添加词条</button>
+</div>
+
+<script src="libs/nebulas.js"></script>
+<script src="libs/nebPay.min.js"></script>
+<script src="libs/jquery-3.3.1.min.js"></script>
+
+<script>
+
+    //合约地址
+    const contractAddress = 'n1krDmHWvYqa98bxSAfBhY1hVi2zNZtg5XR'
+    var nebulas = require('nebulas')
+    var neb = new nebulas.Neb()
+    neb.setRequest(new nebulas.HttpRequest('https://testnet.nebulas.io'))
+
+    //监听搜索按钮点击事件
+    $('#search').click(function () {
+        var key = $('#search_value').val();
+        if (key.trim() == '') {
+            alert('请输入搜索的关键词')
+            return
+        }
+
+        //搜索关键词
+        neb.api.call({
+            from: nebulas.Account.NewAccount().getAddressString(),
+            to: contractAddress,
+            value: 0,
+            nonce: 0,
+            gasPrice: 1000000,
+            gasLimit: 2000000,
+            contract: {
+                'function': 'get',
+                'args': JSON.stringify([key])
+            }
+        })
+            .then(function (resp) {
+                var result = resp.result;//result是JSON字符串
+                //result为‘null’说明没有搜索到相关词
+                if(result == 'null') {
+                    //创建逻辑
+                    //隐藏.result_success
+                    $('.result_success').addClass('hide')
+                    //显示.result_faile
+                    $('.result_faile').removeClass('hide')
+                    //设置关键词名字
+                    $('#result_faile_add').text(key)
+                }else{
+                    //搜索逻辑
+                    try{
+                        result = JSON.parse(result);
+                    }catch(err){
+                        // alert(result)
+                    }
+
+                    //显示#result_success
+                    $('.result_success').removeClass('hide')
+                    $('.result_faile').addClass('hide')
+                    $('.add_banner').addClass('hide')
+
+                    if(!!result.key) {//显示搜索结果
+                        //对它里面的元素赋值
+                        $('#search_banner').text(key)
+                        $('#search_result').text(result.value)
+                        $('#search_result_author').text(result.author)
+                    }else{//显示错误数据
+                        //对它里面的元素赋值
+                        $('#search_banner').text(key)
+                        $('#search_result').text(result)
+                        $('#search_result_author').text('')
+                    }
+                }
+            })
+    })
+//    监听新增按钮点击事件
+    $('#add').click(function () {
+        //显示新增关键词表单项
+        $('.result_faile').addClass('hide')
+        $('.add_banner').removeClass('hide')
+
+        $('#add_value').val('')
+    })
+
+    var NebPay = require('nebpay')
+    var nebPay = new NebPay();
+    var serialNumber;
+    var callbackUrl = NebPay.config.testnetUrl;
+    var timer;
+
+    $('#save').click(function () {
+        var key = $('#search_value').val()
+        var value = $('#add_value').val()
+        //提交交易请求
+        serialNumber = nebPay.call(
+            contractAddress,0,'save',
+            JSON.stringify([key,value]),
+            {callback:callbackUrl}
+        );
+
+        timer = setInterval(refresh,10000)
+    })
+
+    function refresh() {
+        nebPay.queryPayInfo(serialNumber,{callback:callbackUrl})
+            .then(function (resp) {
+                resp = JSON.parse(resp)
+                if(resp.code == 0) {
+                    alert('新增词条成功，请稍后刷新页面查看')
+                    clearInterval(timer)
+                }
+            })
+            .catch(function (err) {
+                console.log(err);
+            })
+    }
+</script>
+</body>
+</html>
