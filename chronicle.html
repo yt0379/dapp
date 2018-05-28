@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        /*logo样式*/
+        .logo {
+            text-align: center;
+        }
+
+        h1 {
+            font-weight: normal;
+            font-size: 32px;
+            color: #999;
+        }
+
+        .logo span {
+            font-size: 26px;
+            color: #ececec;
+            vertical-align: text-bottom;
+        }
+
+        /*列表样式*/
+        ul#list {
+            list-style: none;
+            padding: 0;
+        }
+
+        #list > li {
+            border: 5px solid #f2f2f2;
+            margin-bottom: 10px;
+        }
+
+        #list span {
+            line-height: 60px;
+            background: #fafafa;
+            display: inline-block;
+            font-weight: bold;
+            padding: 0 10px;
+            margin-right: 10px;
+        }
+
+        /*新增表单*/
+        .hide {
+            display: none;
+        }
+
+        a {
+            color: #666;
+        }
+
+        div#addForm {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .box {
+            background: white;
+            width: 60%;
+            padding: 20px 16px;
+            margin: 10% auto;
+            border: 5px solid #f2f2f2;
+        }
+
+        textarea#content {
+            width: 86%;
+            vertical-align: middle;
+        }
+
+        .box > div {
+            margin-bottom: 14px;
+        }
+
+        button {
+            width: 20%;
+            margin-left: 40%;
+            height: 30px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="logo">
+    <h1>星云大事记 <span>Chronicle</span></h1>
+    <img src="img/logo.png">
+</div>
+
+<ul id="list"></ul>
+
+<div class="toolbar">
+    <a href="javascript:void(0)"
+       onclick="add()">
+        新增事件
+    </a>
+    <a href="javascript:void(0)"
+       onclick="getData(cb, limit, offset)"
+       id="btnMore" class="hide">
+        获取更多事件
+    </a>
+</div>
+
+<div id="addForm" class="hide">
+    <div class="box">
+        <div>
+            <label>事件内容</label>
+            <textarea id="content" rows="5"></textarea>
+        </div>
+        <div>
+            <label>事件时间</label>
+            <input id="time" type="date">
+        </div>
+        <button onclick="append()">新增事件</button>
+    </div>
+</div>
+
+<script src="libs/nebulas.js"></script>
+<script src="libs/nebPay.min.js"></script>
+<script>
+    //合约地址
+    const contractAddress = 'n1khJTEHm8D8uvNpXEyDHyCZSqndj2XuvAy'
+    //1.引入nebulas
+    var nebulas = require('nebulas')
+    //2.创建Neb实例
+    var neb = new nebulas.Neb();
+    //3.设置网络请求地址
+    neb.setRequest(new nebulas.HttpRequest('https://testnet.nebulas.io'))
+
+    //4.调用合约函数
+    var limit = 2, offset = 0;
+    getData(cb, limit, offset)
+
+    function cb(resp) {
+        console.log(resp);
+        //数据转换
+        const result = JSON.parse(resp.result);
+        const items = result.items;
+        const hasMore = result.hasMore;
+
+        //处理更多链接
+        const btnMore = document.getElementById('btnMore')
+        if(hasMore) {
+            btnMore.classList.remove('hide')
+        }else{
+            btnMore.classList.add('hide')
+        }
+
+        //更新偏移量
+        offset += limit;
+
+        //列表数据展示
+        var inner = '';
+        for (var i = 0; i < items.length; i++) {
+            const item = items[i];
+            inner += '<li><span>' + item.time + '</span>' + item.content + '</li>'
+        }
+        var list = document.getElementById('list');
+        list.innerHTML += inner;
+    }
+
+    function getData(cb, limit, offset) {
+        //可能的参数
+        var args = [];
+        if (limit) {
+            args.push(limit);
+        }
+        if (offset) {
+            args.push(offset);
+        }
+        neb.api.call({
+            from: nebulas.Account.NewAccount().getAddressString(),//交易发起者
+            to: contractAddress,//交易对象，调用合约函数时填写合约地址
+            value: 0,//转账金额
+            nonce: 0,//数字计数器
+            gasPrice: 1000000,//油价
+            gasLimit: 2000000,//油耗上限
+            contract: {
+                'function': 'getAll',
+                args: JSON.stringify(args)
+            }
+        })
+            .then(cb)
+            .catch(function (err) {
+                console.log(err);
+            })
+    }
+
+    //弹出新增表单
+    var addForm = document.getElementById('addForm')
+
+    function add() {
+        addForm.classList.remove('hide');
+    }
+
+
+    //存入零钱
+    var NebPay = require('nebpay')
+    var nebPay = new NebPay();
+    // var callbackUrl = NebPay.config.mainnetUrl;
+    var callbackUrl = NebPay.config.testnetUrl;
+    var serialNumber, timer;
+
+    function append() {
+        //存入数额
+        var inp = document.getElementById('inp')
+        var to = contractAddress;
+        var value = 0;
+        var callFunction = 'append';
+        var content = document.getElementById('content').value;
+        var time = document.getElementById('time').value;
+        var callArgs = JSON.stringify([content, time])
+        serialNumber = nebPay.call(to, value, callFunction, callArgs, {
+            callback: callbackUrl, //回调服务器地址
+        })
+        //设置定时器查询交易信息
+        timer = setInterval(refresh, 15000)
+    }
+
+    function refresh() {
+        nebPay.queryPayInfo(serialNumber, {callback: callbackUrl})
+            .then(function (resp) {
+                console.log('refresh', resp);
+                resp = JSON.parse(resp)
+                if (resp.code === 0) {
+                    clearInterval(timer)
+                    addForm.classList.add('hide')//隐藏新增表单
+                    alert('新增事件成功！')
+                }
+            })
+            .catch(function (err) {
+                clearInterval(timer)
+                console.log(err);
+            })
+    }
+
+    function listener(resp) {
+        console.log('listener', resp);
+    }
+</script>
+</body>
+</html>
