@@ -3,20 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <title>星云待办事项</title>
+    <style>
+        body {
+            margin: 0;
+            background-image: url(img/background.jpg);
+        }
+
+        .header {
+            height: 70px;
+            background: #46589896;
+            display: flex;
+        }
+
+        .header > h1 {
+            color: white;
+            font-size: 24px;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .header span {
+            font-weight: normal;
+        }
+
+        .add-todo {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            margin-left: 100px;
+            padding-right: 40px;
+        }
+
+        .header button {
+            width: 30px;
+            height: 30px;
+            border: none;
+            background: rgba(255, 255, 255, 0.5);
+            font-size: 28px;
+            color: #eee;
+        }
+
+        .header input {
+            height: 28px;
+            padding-left: 10px;
+            color: #dadada;
+            border: none;
+            outline: 0;
+            flex: 1;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /*导航样式*/
+        .content {
+            display: flex;
+        }
+
+        .nav {
+            width: 220px;
+        }
+
+        .nav > a {
+            display: block;
+            height: 70px;
+            color: white;
+            line-height: 70px;
+            padding-left: 30px;
+            cursor: pointer;
+        }
+
+        .nav > a:hover, .nav > .active {
+            background: #243f8e7d;
+        }
+
+        /*列表样式*/
+        .list {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            color: white;
+        }
+
+        .item > input {
+            margin-right: 14px;
+        }
+    </style>
 </head>
 <body>
 
 <div id="app">
-    <h1>{{title}}</h1>
+    <div class="header">
+        <h1>TODO<span>LIST</span></h1>
+        <div class="add-todo">
+            <button @click="add">+</button>
+            <input type="text" v-model="text">
+        </div>
+    </div>
+    <!--内容-->
+    <div class="content">
+        <div class="nav">
+            <a :class="{active:taskType=='active'}"
+               @click="taskTypeChange('active')">Active</a>
+            <a :class="{active:taskType=='completed'}"
+               @click="taskTypeChange('completed')">Completed</a>
+        </div>
+        <div class="list">
+            <div class="item" v-for="item in items">
+                <input type="checkbox"
+                       v-model="item.completed"
+                       @change="update(item)">
+                <span>{{item.text}}</span>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="libs/nebPay.min.js"></script>
 <script src="libs/vue.min.js"></script>
 <script>
+    const contractAddress = 'n1rHxJyS5DJ8ThsuchKFhU1i2syNs2xMG6i'
+
+    var NebPay = require('nebpay')
+    var nebPay = new NebPay();
+    var callbackUrl = NebPay.config.testnetUrl;
+
     new Vue({
-        el:'#app',
-        data:{
-            title:'TodoList'
+        el: '#app',
+        data: {
+            limit: 10,//单页尺寸
+            offset: 0,//偏移量
+            taskType: 'active',//任务默认类型
+            items: [],
+            text: '',//新增任务内容
+        },
+        created: function () {
+            this.get();
+        },
+        methods: {
+            get: function () {
+                var args = JSON.stringify([this.limit, this.offset, this.taskType])
+                var that = this;
+                //模拟钱包调用
+                nebPay.simulateCall(contractAddress, 0, 'get', args, {
+                    listener: function (resp) {
+                        //将返回结果赋值给vue实例中的items
+                        var result = JSON.parse(resp.result);
+                        that.items = result;
+                    }
+                })
+            },
+            add: function () {
+                var args = JSON.stringify([this.text])
+                nebPay.call(contractAddress, 0, 'add', args, {
+                    callback: callbackUrl,
+                    listener: function (resp) {
+                        console.log(resp);
+                    }
+                })
+            },
+            update: function (item) {
+                var args = JSON.stringify([item.id, item.completed])
+                nebPay.call(contractAddress, 0, 'update', args, {
+                    callback: callbackUrl,
+                    listener: function (resp) {
+                        console.log(resp);
+                    }
+                })
+            },
+            taskTypeChange:function (type) {
+                //更新taskType
+                this.taskType = type;
+                //根据最新的taskType获取数据
+                this.get();
+            }
         }
     })
 </script>
