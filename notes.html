@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+    <!--iconfont-->
+    <link rel="stylesheet" href="font/iconfont.css">
+
+    <!--color picker-->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-colorpicker/2.5.2/css/bootstrap-colorpicker.min.css">
+
+    <title>Hello, world!</title>
+    <style>
+        .logo {
+            height: 50px;
+        }
+
+        header {
+            height: 70px;
+            background: #FFF;
+            box-shadow: 0 1px 9px 0 #CECECE;
+        }
+
+        button#add-note {
+            border-radius: 20px;
+            width: 150px;
+        }
+
+        /*备忘列表*/
+        .note {
+            min-width: 200px;
+            max-width: 400px;
+            background: #dadbff;
+            box-shadow: 2px 3px 7px 1px #8c8c8c;
+            margin: 20px;
+        }
+
+        .note-header {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            color: #5d5d5d;
+            font-size: 12px;
+        }
+
+        .note-control {
+            background: none;
+            border: none;
+            color: #5d5d5d;
+            cursor: pointer;
+        }
+
+        .icon-add {
+            font-size: 20px;
+            font-weight: bold;
+            position: relative;
+            top: 2px;
+        }
+
+        .icon-delete {
+            font-size: 19px;
+        }
+
+        .note-date {
+            line-height: 30px;
+        }
+
+        .note-control:hover {
+            color: black;
+        }
+
+        .note-body {
+            padding: 20px;
+            max-height: 200px;
+            overflow: auto;
+            color: #5d5d5d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <header class="container-fluid d-flex justify-content-between align-items-center">
+        <div>
+            <img src="img/logo.jpg" class="logo">
+            Nebulas Notes
+        </div>
+        <button id="add-note" class="btn btn-outline-secondary"
+                @click="modalTitle='新增备忘';currNote={}"
+                data-target="#note-modal" data-toggle="modal">
+            <i class="iconfont icon-add"></i>
+            新增
+        </button>
+    </header>
+
+    <!--标签区-->
+    <div class="container-fluid d-flex flex-wrap p-0">
+        <div class="note" v-for="note in notes"
+             :style="{background:note.color}">
+            <div class="note-header d-flex justify-content-between">
+                <div class="note-date">{{note.date}}</div>
+                <div class="note-controls">
+                    <button class="note-control"
+                            data-toggle="modal"
+                            data-target="#note-modal"
+                            @click="modalTitle='更新待办';Object.assign(currNote,note)">
+                        <i class="iconfont icon-edit"></i></button>
+                    <button class="note-control"
+                            @click="remove(note.id)">
+                        <i class="iconfont icon-delete"></i></button>
+                </div>
+            </div>
+            <div class="note-body">
+                {{note.text}}
+            </div>
+        </div>
+    </div>
+
+    <!--新增表单-->
+    <div id="note-modal" class="modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{modalTitle}}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="note-text">备忘内容</label>
+                            <textarea id="note-text" class="form-control"
+                                      v-model="currNote.text"></textarea>
+                        </div>
+
+                        <label for="note-color">备忘颜色</label>
+                        <div id="cp" class="input-group mb-3" for="note-color">
+                            <input type="text" id="note-color" class="form-control"
+                                   v-model="currNote.color">
+                            <div class="input-group-append">
+                                <span class="input-group-text input-group-addon">
+                                    <i :style="{background:currNote.color}"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary"
+                            @click="save">提交
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.bootcss.com/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.bootcss.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-colorpicker/2.5.2/js/bootstrap-colorpicker.min.js"></script>
+<script src="libs/vue.min.js"></script>
+<script src="libs/nebPay.min.js"></script>
+<script src="contract-api.js"></script>
+<script>
+
+    var api = new NoteContractApi();
+
+    var app = new Vue({
+        el: '#app',
+        data: {
+            notes: [],
+            modalTitle: '',
+            currNote: {}
+        },
+        created: function () {
+            this.get();
+        },
+        methods: {
+            get: function () {
+                var that = this;
+                api.get(10, 0, function (resp) {
+                    that.notes = JSON.parse(resp.result)
+                })
+            },
+            save: function () {
+                var n = this.currNote;
+                var serialNumber;
+                if (this.modalTitle == '新增备忘') {
+                    serialNumber = api.add(n.text, n.color);
+                } else {
+                    serialNumber = api.update(n.id, n.text, n.color);
+                }
+            },
+            remove:function (id) {
+                var serialNumber;
+                if(confirm('确定删除该备忘吗？')){
+                    serialNumber = api.delete(id)
+                }
+            }
+        }
+    })
+
+    //colorpicker初始化
+    $('#cp').colorpicker().on('change', function (e) {
+        app.currNote.color = e.target.value;
+    });
+</script>
+
+</body>
+</html>
