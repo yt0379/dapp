@@ -1,0 +1,208 @@
+﻿<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>俄罗斯方块 — 星云版</title>
+    <style>
+        body {
+            margin: 0;
+            background: beige;
+        }
+
+        .logo {
+            height: 50px;
+        }
+
+        header {
+            height: 70px;
+            background: #FFF;
+            box-shadow: 0 1px 9px 0 #CECECE;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-box{
+            margin-left: 20px;
+        }
+
+        .title {
+            font-size: 22px;
+        }
+
+        .sub-title {
+            font-style: italic;
+        }
+
+
+        .title, .sub-title {
+            position: relative;
+            bottom: 14px;
+        }
+        span#hisScore {
+            color: #ff764a;
+            font-weight: bold;
+        }
+        div#score {
+            margin-right: 20px;
+        }
+        .playground {
+            width: 525px;
+            height: 550px;
+            position: absolute;
+            top: 95px;
+            left: 50%;
+            margin-left: -260px;
+        }
+
+        .playground img {
+            position: absolute;
+        }
+
+        .playground p {
+            font-size: 30px;
+            font-family: 'SimHei';
+            font-weight: bold;
+            color: #667799;
+            position: absolute;
+        }
+
+        #start {
+            text-align: center;
+            padding-top: 200px;
+        }
+
+        .btn.btn-start{
+            width: 200px;
+            height: 50px;
+            -webkit-border-radius: 25px;
+            -moz-border-radius: 25px;
+            border-radius: 25px;
+        }
+        .btn {
+            border: 1px solid #999;
+            background: white;
+            -webkit-border-radius: 20px;
+            -moz-border-radius: 20px;
+            border-radius: 20px;
+            width: 150px;
+            height: 40px;
+            outline: 0;
+        }
+
+        .btn:hover {
+            background: #CCC;
+        }
+
+        .btn:active {
+            background: #AAA;
+        }
+
+        #attention {
+            text-align: left;
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: #8d8d8d;
+        }
+
+        #attention > p {
+            margin: 5px 0 0 0;
+        }
+
+        #attention a {
+            color: #8d8d8d;
+        }
+
+        .hide {
+            display: none;
+        }
+
+        div#newScoreBox {
+            position: absolute;
+            top: 200px;
+            left: 50%;
+            margin-left: -150px;
+        }
+
+        #newScoreBox>p {
+            color: #de0000;
+            font-size: 22px;
+        }
+
+    </style>
+</head>
+<body>
+<header>
+    <div class="logo-box">
+        <img src="img/logo.jpg" class="logo">
+        <span class="title">俄罗斯方块</span>
+        <span class="sub-title">星云版</span>
+    </div>
+    <div id="score" class="hide">
+        历史记录：<span id="hisScore">0</span>
+    </div>
+</header>
+<div id="start">
+    <button class="btn btn-start" onclick="start()">开始游戏</button>
+</div>
+
+<div id="attention">
+    <p>注意事项：</p>
+    <p>1.请使用Chrome浏览器体验游戏</p>
+    <p>2.请安装<a href="https://github.com/ChengOrangeJu/WebExtensionWallet">星云钱包谷歌浏览器扩展</a></p>
+    <p>3.使用星云钱包谷歌浏览器扩展创建钱包</p>
+    <p>4.在上线mainnet之前请先使用testnet</p>
+</div>
+
+<div id="pg" class="playground hide"></div>
+
+<div id="newScoreBox" class="hide">
+    <p>新的历史记录诞生啦！</p>
+    <button class="btn" onclick="setNewScore()">更新记录</button>
+    <button class="btn" onclick="start(true)">再来一局</button>
+</div>
+
+<script src="tetris.js"></script>
+<script src="libs/nebPay.min.js"></script>
+<script src="tetris-contract-api.js"></script>
+<script>
+    const api = new TetrisContractApi();
+
+    var hisScore = 0;
+
+    function start(delay) {
+        tetris.init().start(newScore);
+        document.getElementById('pg').classList.remove('hide');
+        document.getElementById('start').classList.add('hide');
+        document.getElementById('newScoreBox').classList.add('hide');
+
+        //获取历史最高纪录
+        if(delay) {
+            setTimeout(function () {
+                api.start(setScore)
+            },15000)
+        }else{
+            api.start(setScore)
+        }
+    }
+
+    function setScore(resp) {
+        hisScore = JSON.parse(resp.result);
+        document.getElementById('score').classList.remove('hide')
+        document.getElementById('hisScore').innerText = resp.result;
+    }
+
+    function newScore(score) {
+        if(score > hisScore) {
+            hisScore = score;
+            document.getElementById('newScoreBox').classList.remove('hide');
+        }
+    }
+
+    function setNewScore() {
+        api.newScore(hisScore)
+    }
+</script>
+</body>
+</html>
