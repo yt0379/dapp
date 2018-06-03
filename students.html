@@ -1,0 +1,294 @@
+<!doctype html>
+<html>
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+    <!--iconfont-->
+    <link rel="stylesheet" href="font/iconfont.css">
+
+    <title>星云学管</title>
+    <style>
+        .logo {
+            height: 50px;
+        }
+
+        header {
+            height: 70px;
+            background: #FFF;
+            box-shadow: 0 1px 9px 0 #CECECE;
+        }
+
+        button#add-note {
+            border-radius: 20px;
+            width: 150px;
+            height: 40px;
+        }
+
+        /*备忘列表*/
+        .note {
+            min-width: 200px;
+            max-width: 400px;
+            background: #dadbff;
+            box-shadow: 2px 3px 7px 1px #8c8c8c;
+            margin: 20px;
+        }
+
+        .note-header {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            color: #5d5d5d;
+            font-size: 12px;
+        }
+
+        .note-control {
+            background: none;
+            border: none;
+            color: #5d5d5d;
+            cursor: pointer;
+        }
+
+        .icon-add {
+            font-size: 20px;
+            font-weight: bold;
+            position: relative;
+            top: 2px;
+        }
+
+        .icon-delete {
+            font-size: 19px;
+        }
+
+        .note-date {
+            line-height: 30px;
+        }
+
+        .note-control:hover {
+            color: black;
+        }
+
+        .note-body {
+            padding: 20px;
+            max-height: 200px;
+            overflow: auto;
+            color: #5d5d5d;
+            font-size: 14px;
+        }
+
+        button.btn.btn-primary {
+            height: 42px;
+        }
+
+        .inp-score {
+            width: 40px;
+            height: 32px;
+            text-align: center;
+            vertical-align: middle;
+            margin: 0 7px;
+        }
+
+        button.btn.btn-outline-secondary {
+            border-radius: 15px;
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            font-weight: bold;
+        }
+
+        td, th {
+            text-align: center;
+        }
+
+        td{
+            vertical-align: middle;
+            line-height: 40px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <header class="container-fluid d-flex justify-content-between align-items-center">
+        <div>
+            <img src="img/logo.jpg" class="logo">
+            星云学管
+        </div>
+        <button id="add-note" class="btn btn-outline-secondary"
+                @click="modalTitle='新增学员';currStudent={}"
+                data-target="#student-modal" data-toggle="modal">
+            <i class="iconfont icon-add"></i>
+            新增学员
+        </button>
+    </header>
+
+    <!--学员列表-->
+    <table class="table table-hover table-bordered">
+        <thead class="thead-dark">
+        <tr>
+            <th>ID</th>
+            <th>姓名</th>
+            <th>班级</th>
+            <th>课时</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="s in students">
+            <td>{{s.id}}</td>
+            <td>{{s.name}}</td>
+            <td>{{s.clazz}}</td>
+            <td style="line-height: 40px;">
+                <button class="btn btn-outline-secondary"
+                        @click="minusScore(s)">-
+                </button>
+                <input type="text" v-model="s.score"
+                       class="inp-score"
+                       @keyup.enter="setScore(s)">
+                <button class="btn btn-outline-secondary"
+                        @click="plusScore(s)">+
+                </button>
+            </td>
+            <td>
+                <button class="btn btn-primary" style="height: 42px;"
+                        data-toggle="modal" data-target="#student-modal"
+                        @click="currStudent = Object.assign({},s)"><i class="iconfont icon-edit"></i> 更新
+                </button>
+                <button class="btn btn-danger"
+                        @click="remove(s.id)"><i class="iconfont icon-delete"></i> 删除
+                </button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!--没有数据-->
+    <p v-if="students.length == 0">没有任何学员信息</p>
+
+    <!--新增表单-->
+    <div id="student-modal" class="modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{modalTitle}}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="sname">姓名</label>
+                            <input id="sname" type="text" class="form-control"
+                                   v-model="currStudent.name">
+                        </div>
+                        <div class="form-group">
+                            <label for="clazz">班级</label>
+                            <input id="clazz" type="text" class="form-control"
+                                   v-model="currStudent.clazz">
+                        </div>
+                        <div class="form-group">
+                            <label for="score">课时</label>
+                            <input id="score" type="number"
+                                   class="form-control"
+                                   v-model="currStudent.score">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary"
+                            @click="save">提交
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.bootcss.com/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.bootcss.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+<script src="libs/vue.min.js"></script>
+<script src="libs/nebPay.min.js"></script>
+<script src="students-contract-api.js"></script>
+<script>
+
+    var api = new StudentContractApi();
+
+    var app = new Vue({
+        el: '#app',
+        data: {
+            students: [],
+            modalTitle: '',
+            currStudent: {}
+        },
+        created: function () {
+            this.get();
+        },
+        methods: {
+            get: function () {
+                api.get(function (resp) {
+                    if (resp.result != 'null') {
+                        app.students = JSON.parse(resp.result)
+                    }
+                })
+            },
+            save: function () {
+                var n = this.currStudent;
+                if(n.score) n.score = parseInt(n.score);
+                if (!this.currStudent.id) {
+                    api.add(n.name, n.clazz, n.score,
+                        function (resp) {
+                            $('#student-modal').modal('hide');
+                            setTimeout(app.get,15000)
+                        });
+                } else {
+                    api.update(n.id, n.name, n.clazz, n.score,
+                        function (resp) {
+                            $('#student-modal').modal('hide');
+                            setTimeout(app.get,15000)
+                        });
+                }
+            },
+            remove: function (id) {
+                var serialNumber;
+                if (confirm('确定删除该学员吗？')) {
+                    serialNumber = api.delete(id, function (resp) {
+                        setTimeout(app.get,15000)
+                    })
+                }
+            },
+            minusScore:function (s) {
+                s.score--;
+                this.currStudent = s;
+                this.save();
+            },
+            plusScore:function (s) {
+                s.score++;
+                this.currStudent = s;
+                this.save();
+            },
+            setScore:function (s) {
+                this.currStudent = s;
+                this.save();
+            },
+        },
+
+    })
+</script>
+
+</body>
+</html>
