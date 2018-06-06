@@ -152,7 +152,7 @@
     <p>1.请使用Chrome浏览器体验游戏</p>
     <p>2.请安装<a href="https://github.com/ChengOrangeJu/WebExtensionWallet">星云钱包谷歌浏览器扩展</a></p>
     <p>3.使用星云钱包谷歌浏览器扩展创建钱包</p>
-    <p>4.在上线mainnet之前请先使用testnet</p>
+    <p>4.请将钱包扩展设置为mainnet</p>
 </div>
 
 <div id="pg" class="playground hide"></div>
@@ -172,18 +172,23 @@
     var hisScore = 0;
 
     function start(delay) {
-        tetris.init().start(newScore);
-        document.getElementById('pg').classList.remove('hide');
-        document.getElementById('start').classList.add('hide');
-        document.getElementById('newScoreBox').classList.add('hide');
-
-        //获取历史最高纪录
-        if(delay) {
-            setTimeout(function () {
-                api.start(setScore)
-            },15000)
+        if(typeof(webExtensionWallet) === "undefined"){
+            alert ("请先安装钱包扩展");
+            document.getElementById('start').classList.add('hide');
         }else{
-            api.start(setScore)
+            tetris.init().start(newScore);
+            document.getElementById('pg').classList.remove('hide');
+            document.getElementById('start').classList.add('hide');
+            document.getElementById('newScoreBox').classList.add('hide');
+
+            //获取历史最高纪录
+            if(delay) {
+                setTimeout(function () {
+                    api.start(setScore)
+                },15000)
+            }else{
+                api.start(setScore)
+            }
         }
     }
 
