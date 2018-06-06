@@ -1,5 +1,6 @@
-const contractAddress = 'n22CgqEm9jbsNwnTuAHZqLzvErHa6FxiBcu';
-const useTestnet = true;
+const contractAddress = 'n1yPMEvmqLXY5DnwqknpvZyQNyc8pgmn3YP';
+// const contractAddress = 'n22CgqEm9jbsNwnTuAHZqLzvErHa6FxiBcu';
+const useTestnet = false;
 
 function SmartContractApi(contractAddress, useTestnet) {
     const NebPay = require('nebpay');

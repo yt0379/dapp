@@ -236,7 +236,15 @@
             currStudent: {}
         },
         created: function () {
-            this.get();
+            //检测钱包扩展安装情况
+            setTimeout(function () {
+                if(typeof(webExtensionWallet) === "undefined"){
+                    alert ("请先安装钱包扩展");
+                    $('#add-note').prop('disabled',true);
+                }else{
+                    app.get();
+                }
+            },100)
         },
         methods: {
             get: function () {
@@ -285,8 +293,7 @@
                 this.currStudent = s;
                 this.save();
             },
-        },
-
+        }
     })
 </script>
 
